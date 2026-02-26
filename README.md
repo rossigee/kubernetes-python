@@ -62,6 +62,32 @@ for event in w.stream(v1.list_namespace, _request_timeout=60):
 print("Ended.")
 ```
 
+use custom pool manager for advanced connection settings:
+
+```python
+from kubernetes import client, config
+import urllib3
+
+# Create a custom pool manager with specific settings
+pool_manager = urllib3.PoolManager(
+    num_pools=10,
+    maxsize=10,
+    # other custom settings like SSL, retries, etc.
+)
+
+# Configs can be set in Configuration class directly or using helper utility
+config.load_kube_config()
+
+# Pass the custom pool_manager to ApiClient
+api_client = client.ApiClient(pool_manager=pool_manager)
+v1 = client.CoreV1Api(api_client)
+
+print("Listing pods with custom pool manager:")
+ret = v1.list_pod_for_all_namespaces(watch=False)
+for i in ret.items:
+    print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
+```
+
 More examples can be found in [examples](examples/) folder. To run examples, run this command:
 
 ```shell

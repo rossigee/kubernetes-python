@@ -30,12 +30,12 @@ class TestApiClient(unittest.TestCase):
         pool = { 'proxy': urllib3.ProxyManager, 'direct': urllib3.PoolManager }
 
         for dst, proxy, no_proxy, expected_pool in [
-             ( 'http://kube.local/',           None,                       None,                           pool['direct']),
-             ( 'http://kube.local/',          'http://proxy.local:8080/',  None,                           pool['proxy']),
-             ( 'http://127.0.0.1:8080/',      'http://proxy.local:8080/',  'localhost,127.0.0.0/8,.local', pool['direct']),
-             ( 'http://kube.local/',          'http://proxy.local:8080/',  'localhost,127.0.0.0/8,.local', pool['direct']),
-             ( 'http://kube.others.com:1234/','http://proxy.local:8080/',  'localhost,127.0.0.0/8,.local', pool['proxy']),
-             ( 'http://kube.others.com:1234/','http://proxy.local:8080/',  '*',                            pool['direct']),
+              ( 'http://kube.local/',           None,                       None,                           pool['direct']),
+              ( 'http://kube.local/',          'http://proxy.local:8080/',  None,                           pool['proxy']),
+              ( 'http://127.0.0.1:8080/',      'http://proxy.local:8080/',  'localhost,127.0.0.0/8,.local', pool['direct']),
+              ( 'http://kube.local/',          'http://proxy.local:8080/',  'localhost,127.0.0.0/8,.local', pool['direct']),
+              ( 'http://kube.others.com:1234/','http://proxy.local:8080/',  'localhost,127.0.0.0/8,.local', pool['proxy']),
+              ( 'http://kube.others.com:1234/','http://proxy.local:8080/',  '*',                            pool['direct']),
         ]:
             # setup input
             config = Configuration()
@@ -49,3 +49,8 @@ class TestApiClient(unittest.TestCase):
             # test
             client = kubernetes.client.ApiClient(configuration=config)
             self.assertEqual( expected_pool, type(client.rest_client.pool_manager) )
+
+    def test_custom_pool_manager(self):
+        custom_pool = urllib3.PoolManager()
+        client = kubernetes.client.ApiClient(pool_manager=custom_pool)
+        self.assertIs(client.rest_client.pool_manager, custom_pool)
