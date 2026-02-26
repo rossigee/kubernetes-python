@@ -49,6 +49,7 @@ SETTING_FILE="${TEMP_FOLDER}/settings"
 echo "export KUBERNETES_BRANCH=\"$(python ${SCRIPT_ROOT}/constants.py KUBERNETES_BRANCH)\"" > $SETTING_FILE
 echo "export CLIENT_VERSION=\"$(python ${SCRIPT_ROOT}/constants.py CLIENT_VERSION)\"" >> $SETTING_FILE
 echo "export PACKAGE_NAME=\"client\"" >> $SETTING_FILE
+echo "export TEMPLATE_DIR=\"${SCRIPT_ROOT}/templates\"" >> $SETTING_FILE
 
 if [[ -z ${GEN_ROOT:-} ]]; then
     GEN_ROOT="${TEMP_FOLDER}/gen"
@@ -68,21 +69,7 @@ sed -i'' "s/^__version__ = .*/__version__ = \\\"${CLIENT_VERSION}\\\"/" "${CLIEN
 sed -i'' "s/^PACKAGE_NAME = .*/PACKAGE_NAME = \\\"${PACKAGE_NAME}\\\"/" "${SCRIPT_ROOT}/../setup.py"
 sed -i'' "s,^DEVELOPMENT_STATUS = .*,DEVELOPMENT_STATUS = \\\"${DEVELOPMENT_STATUS}\\\"," "${SCRIPT_ROOT}/../setup.py"
 
-# This is a terrible hack:
-# first, this must be in gen repo not here
-# second, this should be ported to swagger-codegen
-echo ">>> patching client..."
-git apply "${SCRIPT_ROOT}/rest_client_patch.diff"
-# The fix this patch is trying to make is already in the upstream swagger-codegen
-# repo but it's not in the version we're using. We can remove this patch
-# once we upgrade to a version of swagger-codegen that includes it (version>= 6.6.0).
-# See https://github.com/OpenAPITools/openapi-generator/pull/15283
-git apply "${SCRIPT_ROOT}/rest_sni_patch.diff"
-# The following is commented out due to:
-# AttributeError: 'RESTResponse' object has no attribute 'headers'
-# OpenAPI client generator prior to 6.4.0 uses deprecated urllib3 APIs.
-# git apply "${SCRIPT_ROOT}/rest_urllib_headers.diff"
-git apply "${SCRIPT_ROOT}/rest_pool_manager.diff"
+# Custom templates are used instead of patches
 
 echo ">>> generating docs..."
 pushd "${DOC_ROOT}" > /dev/null
